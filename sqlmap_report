@@ -26,7 +26,7 @@ else
 		echo "Folder intact"
 	;;
 	*)
-		echo "enter y or n only"
+		echo "Enter y or n only"
 		exit
 		;;
 	esac 
@@ -69,7 +69,7 @@ case $option in
 		echo "				Scan Completed"
 		echo "*************************************************************************************"
 		echo "Creating report in $HOME/$project"
-		python $HOME/custom_scripts/sqlmap_report.py $HOME/$project/overview_sqlmap_$project.txt
+		python $HOME/sqlmap_report.py $HOME/$project/overview_sqlmap_$project.txt
 		echo "*************************************************************************************"
 		echo "				Starting compression and creating the zip."
 		echo "*************************************************************************************"
@@ -115,11 +115,11 @@ case $option in
 			echo "Scan started"
 			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs -s $HOME/$project/scan_report.txt --flush-session -t $HOME/$project/scan_trace.txt --fresh-queries > $HOME/$project/scan_out.txt | tail -f $HOME/$project/scan_out.txt
 		fi
-		echo "*************************************************************************************"
+	echo "*************************************************************************************"
         echo "				Scan Completed"
         echo "*************************************************************************************"
         echo "Creating report in $HOME/$project"
-        python $HOME/custom_scripts/sqlmap_report.py $HOME/$project/scan_out.txt
+        python $HOME/sqlmap_report.py $HOME/$project/scan_out.txt
 		echo "*************************************************************************************"
 		echo "                          Starting compression and creating the zip."
 		echo "*************************************************************************************"
