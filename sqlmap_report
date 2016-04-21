@@ -6,70 +6,42 @@
 #************************************************************
 
 echo "*************************************************************************************"
-echo "			Automated sqlmap report creator"
+echo "				Automated sqlmap report creator"
 echo "*************************************************************************************"
-echo -n "Enter the project name: (A directory in the $HOME folder will be created and the results will be stored there): "
+echo "Enter the project name: (A directory in the $HOME folder will be created and the results will be stored there):"
 read project
-if [ ! -d "$project" ]
+if [[ ! -d "$project" ]]
 then
-	mkdir "$project"
+	mkdir -p "$project"
 else
-	echo -n "Folder exists, wanna delete it and create new one? (y/n): "
+	echo "Folder exists, wanna delete it and create new one? (y/n)"
 	read opto
 	case $opto in 
-	"y")
-		rm -rf "$HOME/$project"
-		mkdir "$HOME/$project"
+	"y" | "Y")
+		rm -rf "$HOME/$project/"
+		mkdir -p "$HOME/$project/"
 		echo "Folder created"
 	;;
-	"n")
+	"n" | "N")
 		echo "Folder intact"
 	;;
 	*)
-		echo "Enter y or n only"
+		echo "enter y or n only"
 		exit
 		;;
 	esac 
 fi
-echo -n "Enter if you want to read from an URL or a file (u/f): "
-read option
-case $option in
-	"u" | "U")
+function cmprs {
+	if [[ ! -f "$HOME/$project/overview_sqlmap_$project.txt" ]]
+	then
+		echo "Scan not Started, Exiting....."
+		rm -rf "$HOME/$project/"
+	else
 		echo "*************************************************************************************"
-		echo "				URL Selected"
-		echo "*************************************************************************************"
-		echo -n "Enter the URL with params: "
-		read url
-		echo -n "Enter the number of threads (max 10): "
-		read thrd
-		if [ $thrd -gt 10 ]
-		then
-			echo "Enter max 10 threads"
-			exit
-		fi
-		echo -n "Enter the level (max 5): "
-		read level
-		if [ $level -gt 5 ]
-                then
-                        echo "Enter max 5 level"
-                        exit
-                fi
-		echo -n "Enter the risk (max 5): "
-		read risk
-		if [ $risk -gt 5 ]
-           	then
-                	echo "Enter max 5 risk"
-                        exit
-		fi
-		echo "*************************************************************************************"
-		echo "				Scan Started"
-		echo "*************************************************************************************"
-		sqlmap -u "$url" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs -s $HOME/$project/scan_report.txt --flush-session -t $HOME/$project/extensive_sqlmap_$project.txt --fresh-queries > $HOME/$project/overview_sqlmap_$project.txt | tail -f $HOME/$project/overview_sqlmap_$project.txt
-		echo "*************************************************************************************"
-		echo "				Scan Completed"
+		echo "					Scan Completed"
 		echo "*************************************************************************************"
 		echo "Creating report in $HOME/$project"
-		python $HOME/sqlmap_report.py $HOME/$project/overview_sqlmap_$project.txt
+		python $HOME/custom_scripts/sqlmap_report.py $HOME/$project/overview_sqlmap_$project.txt
 		echo "*************************************************************************************"
 		echo "				Starting compression and creating the zip."
 		echo "*************************************************************************************"
@@ -78,63 +50,88 @@ case $option in
 		echo "*************************************************************************************"
 		echo "				Zipping done, enjoy!!"
 		echo "*************************************************************************************"
+	fi
+	exit 2
+}
+trap cmprs 2
+echo "Enter if you want to read from an URL or a file (u/f):"
+read option
+case $option in
+	"u" | "U")
+		echo "*************************************************************************************"
+		echo "					URL Selected"
+		echo "*************************************************************************************"
+		echo "Enter the URL with params:"
+		read url
+		echo "Enter the number of threads (max 10):"
+		read thrd
+		if [[ $thrd -gt 10 ]]
+		then
+			echo "Enter max 10 threads"
+			exit
+		fi
+		echo "Enter the level (max 5):"
+		read level
+		if [[ $level -gt 5 ]]
+        then
+            echo "Enter max 5 level"
+            exit
+        fi
+		echo "Enter the risk (max 3):"
+		read risk
+		if [[ $risk -gt 3 ]]
+        then
+            echo "Enter max 3 risk"
+            exit
+		fi
+		echo "Enter the cookie value: "
+		read cookie
+		echo "*************************************************************************************"
+		echo "					Scan Started"
+		echo "*************************************************************************************"
+		sqlmap -u "$url" --threads=$thrd --level=$level --risk=$risk --cookie="$cookie" -f --banner --dbs -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries > "$HOME/$project/overview_sqlmap_$project.txt" 1>&2
+		#cmprs
 ;;
 	"f" | "F")
 		echo "*************************************************************************************"
-
-		echo "				File Selected"
+		echo "					File Selected"
 		echo "*************************************************************************************"
-		echo -n "Enter the filename in home directory: "
+		echo "Enter the filename in home directory: "
 		read filename
-		if [ ! -f "$HOME/$filename" ]
+		if [[ ! -f "$HOME/$filename" ]]
 		then
 			echo "File does not exist, make sure you have entered correct filename and it is in $HOME directory."
 			exit
 		else
-			echo -n "Enter the number of threads (max 10): "
-                	read thrd
-                	if [ $thrd -gt 10 ]
-                	then
-                        	echo "Enter max 10 threads"
-                        	exit
-                	fi
-            echo -n "Enter the level (max 5): "
-                	read level
-                	if [ $level -gt 5 ]
-                	then
-                        	echo "Enter max 5 level"
-                        	exit
-                	fi
-            echo -n "Enter the risk (max 5): "
-                	read risk
-                	if [ $risk -gt 5 ]
-                	then
-                        	echo "Enter max 5 risk"
-                        	exit
-                	fi
+			echo "Enter the number of threads (max 10):"
+            read thrd
+            if [[ $thrd -gt 10 ]]
+            then
+                echo "Enter max 10 threads"
+                exit
+            fi
+            echo "Enter the level (max 5):"
+            read level
+            if [[ $level -gt 5 ]]
+            then
+                echo "Enter max 5 level"
+                exit
+            fi
+            echo "Enter the risk (max 3):"
+            read risk
+            if [[ $risk -gt 3 ]]
+            then
+                echo "Enter max 3 risk"
+                exit
+            fi
 			echo "Scan started"
-			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs -s $HOME/$project/scan_report.txt --flush-session -t $HOME/$project/scan_trace.txt --fresh-queries > $HOME/$project/scan_out.txt | tail -f $HOME/$project/scan_out.txt
+			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries > "$HOME/$project/overview_sqlmap_$project.txt" 1>&2
+			cmprs
 		fi
-	echo "*************************************************************************************"
-        echo "				Scan Completed"
-        echo "*************************************************************************************"
-        echo "Creating report in $HOME/$project"
-        python $HOME/sqlmap_report.py $HOME/$project/scan_out.txt
-		echo "*************************************************************************************"
-		echo "                          Starting compression and creating the zip."
-		echo "*************************************************************************************"
-		cp $HOME/$project/scan_out.txt.html $HOME/$project/overview_sqlmap_$project.html
-		cp $HOME/$project/scan_trace.txt $HOME/$project/extensive_sqlmap_$project.txt
-		zip -j -9 $HOME/$project/sqlmap_results_$project.zip $HOME/$project/overview_sqlmap_$project.html $HOME/$project/extensive_sqlmap_$project.txt
-		rm -rf $HOME/$project/overview_sqlmap_$project.html $HOME/$project/extensive_sqlmap_$project.txt
-		echo "*************************************************************************************"
-		echo "                          Zipping done, enjoy!!"
-		echo "*************************************************************************************"
-
 ;;
 	*) 
 		echo "*************************************************************************************"
-		echo "				Enter u or f"
+		echo "					Enter only u or f"
 		echo "*************************************************************************************"
 		exit
 ;;
