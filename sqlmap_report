@@ -91,7 +91,7 @@ case $option in
 		echo "*************************************************************************************"
 		echo "					Scan Started"
 		echo "*************************************************************************************"
-		sqlmap -u "$url" --threads=$thrd --level=$level --risk=$risk --cookie="$cookie" -f --banner --dbs -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries > "$HOME/$project/overview_sqlmap_$project.txt" 1>&2
+		sqlmap -u "$url" --threads=$thrd --level=$level --risk=$risk --cookie="$cookie" -f --banner --dbs -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
 		cmprs
 ;;
 	"f" | "F")
@@ -127,7 +127,7 @@ case $option in
                 		exit
             		fi
 			echo "Scan started"
-			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries > "$HOME/$project/overview_sqlmap_$project.txt" 1>&2
+			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
 			cmprs
 		fi
 ;;
