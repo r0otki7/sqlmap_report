@@ -8,14 +8,12 @@
 echo "*************************************************************************************"
 echo "				Automated sqlmap report creator"
 echo "*************************************************************************************"
-echo "Enter the project name: (A directory in the $HOME folder will be created and the results will be stored there):"
-read project
+read -p "Enter the project name: (A directory in the $HOME folder will be created and the results will be stored there): " project
 if [[ ! -d "$project" ]]
 then
 	mkdir -p "$project"
 else
-	echo "Folder exists, wanna delete it and create new one? (y/n)"
-	read opto
+	read -p "Folder exists, wanna delete it and create new one? (y/n): " opto
 	case $opto in 
 	"y" | "Y")
 		rm -rf "$HOME/$project/"
@@ -31,7 +29,6 @@ else
 		;;
 	esac 
 fi
-
 function cmprs {
 	if [[ ! -f "$HOME/$project/overview_sqlmap_$project.txt" ]]
 	then
@@ -54,80 +51,72 @@ function cmprs {
 	fi
 	exit 2
 }
-
 trap cmprs 2
-echo "Enter if you want to read from an URL or a file (u/f):"
-read option
+read -p "Enter if you want to read from an URL or a file (u/f): " option
 case $option in
 	"u" | "U")
 		echo "*************************************************************************************"
 		echo "					URL Selected"
 		echo "*************************************************************************************"
-		echo "Enter the URL with params:"
-		read url
-		echo "Enter the number of threads (max 10):"
-		read thrd
+		read -p "Enter the URL with params: " url
+		read -p "Enter the number of threads (max 10): " thrd
 		if [[ $thrd -gt 10 ]]
 		then
 			echo "Enter max 10 threads"
 			exit
 		fi
-		echo "Enter the level (max 5):"
-		read level
+		read -p "Enter the level (max 5): " level
 		if [[ $level -gt 5 ]]
-		then
-            		echo "Enter max 5 level"
-            		exit
-        	fi
-		echo "Enter the risk (max 3):"
-		read risk
+        then
+            echo "Enter max 5 level"
+            exit
+        fi
+		read -p "Enter the risk (max 3): " risk
 		if [[ $risk -gt 3 ]]
-        	then
-            		echo "Enter max 3 risk"
-            		exit
+        then
+            echo "Enter max 3 risk"
+            exit
 		fi
-		echo "Enter the cookie value: "
-		read cookie
+		read -p "Enter the cookie value: " cookie
+		read -p "Enter the Backend (MySQL, MSSQL, Oracle etc): " dbms
 		echo "*************************************************************************************"
 		echo "					Scan Started"
 		echo "*************************************************************************************"
-		sqlmap -u "$url" --threads=$thrd --level=$level --risk=$risk --cookie="$cookie" -f --banner --dbs -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
+		sqlmap -u "$url" --threads=$thrd --level=$level --risk=$risk --cookie="$cookie" -f --banner --dbs --dbms="$dbms" -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
+
 		cmprs
 ;;
 	"f" | "F")
 		echo "*************************************************************************************"
 		echo "					File Selected"
 		echo "*************************************************************************************"
-		echo "Enter the filename in home directory: "
-		read filename
+		read -p "Enter the filename in home directory: " filename
 		if [[ ! -f "$HOME/$filename" ]]
 		then
 			echo "File does not exist, make sure you have entered correct filename and it is in $HOME directory."
 			exit
 		else
-			echo "Enter the number of threads (max 10):"
-            		read thrd
-            		if [[ $thrd -gt 10 ]]
-            		then
-                		echo "Enter max 10 threads"
-                		exit
-            		fi
-            		echo "Enter the level (max 5):"
-            		read level
-            		if [[ $level -gt 5 ]]
-            		then
-                		echo "Enter max 5 level"
-                		exit
-            		fi
-            		echo "Enter the risk (max 3):"
-            		read risk
-            		if [[ $risk -gt 3 ]]
-            		then
-                		echo "Enter max 3 risk"
-                		exit
-            		fi
+			read -p "Enter the number of threads (max 10): " thrd
+            if [[ $thrd -gt 10 ]]
+            then
+                echo "Enter max 10 threads"
+                exit
+            fi
+            read -p "Enter the level (max 5): " level
+            if [[ $level -gt 5 ]]
+            then
+                echo "Enter max 5 level"
+                exit
+            fi
+            read -p "Enter the risk (max 3): " risk
+            if [[ $risk -gt 3 ]]
+            then
+                echo "Enter max 3 risk"
+                exit
+            fi
+            read -p "Enter the Backend (MySQL, MSSQL, Oracle etc): " dbms
 			echo "Scan started"
-			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
+			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs --dbms="$dbms" -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
 			cmprs
 		fi
 ;;
