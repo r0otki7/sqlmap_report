@@ -5,13 +5,22 @@
 #Written by r0otki7 <https://github.com/r0otki7/>
 #************************************************************
 
+script_dir=$(dirname "$0")
+if [[ ! -f "$script_dir/sqlmap_report.py" ]]
+then
+	echo "sqlmap_report.py not found. Please put sqlmap_report.py in the same directory as the script."
+	exit
+fi
 echo "*************************************************************************************"
 echo "				Automated sqlmap report creator"
 echo "*************************************************************************************"
+echo -e "\nUse * as the wildcard in the parameter for payload injection into the location for both file and url injection.\n"
+
+#Creating the directory in HOME folder, where all the report files would be stored.
 read -p "Enter the project name: (A directory in the $HOME folder will be created and the results will be stored there): " project
-if [[ ! -d "$project" ]]
+if [[ ! -d "$HOME/$project" ]]
 then
-	mkdir -p "$project"
+	mkdir -p "$HOME/$project"
 else
 	read -p "Folder exists, wanna delete it and create new one? (y/n): " opto
 	case $opto in 
@@ -29,6 +38,8 @@ else
 		;;
 	esac 
 fi
+
+#Function, which handles the report zipping, and cleanup stuff.
 function cmprs {
 	if [[ ! -f "$HOME/$project/overview_sqlmap_$project.txt" ]]
 	then
@@ -39,19 +50,24 @@ function cmprs {
 		echo "					Scan Completed"
 		echo "*************************************************************************************"
 		echo "Creating report in $HOME/$project"
-		python $HOME/custom_scripts/sqlmap_report.py $HOME/$project/overview_sqlmap_$project.txt
+		python $script_dir/sqlmap_report.py $HOME/$project/overview_sqlmap_$project.txt
 		echo "*************************************************************************************"
-		echo "				Starting compression and creating the zip."
+		echo "			Starting compression and creating the zip."
 		echo "*************************************************************************************"
 		mv $HOME/$project/overview_sqlmap_$project.txt.html $HOME/$project/overview_sqlmap_$project.html
-		zip -j -9 $HOME/$project/sqlmap_results_$project.zip $HOME/$project/overview_sqlmap_$project.html $HOME/$project/extensive_sqlmap_$project.txt
+		zip -j -9 $HOME/$project/sqlmap_results_$project.zip $HOME/$project/overview_sqlmap_$project.html $HOME/$project/extensive_sqlmap_$project.txt $HOME/$project/report_sqlmap_$project.sqlite
+		zip -j -9 $HOME/$project/original_files_$project.zip $HOME/$project/overview_sqlmap_$project.txt $HOME/$project/overview_sqlmap_$project.html $HOME/$project/extensive_sqlmap_$project.txt $HOME/$project/report_sqlmap_$project.sqlite
+		find $HOME/$project -type f ! -name "*.zip" -delete
 		echo "*************************************************************************************"
 		echo "				Zipping done, enjoy!!"
 		echo "*************************************************************************************"
 	fi
 	exit 2
 }
+
 trap cmprs 2
+
+#Option for URL or File entry.
 read -p "Enter if you want to read from an URL or a file (u/f): " option
 case $option in
 	"u" | "U")
@@ -59,6 +75,7 @@ case $option in
 		echo "					URL Selected"
 		echo "*************************************************************************************"
 		read -p "Enter the URL with params: " url
+		#Flags passed to sqlmap, can add additional flags accordingly.
 		read -p "Enter the number of threads (max 10): " thrd
 		if [[ $thrd -gt 10 ]]
 		then
@@ -67,23 +84,35 @@ case $option in
 		fi
 		read -p "Enter the level (max 5): " level
 		if [[ $level -gt 5 ]]
-        then
-            echo "Enter max 5 level"
-            exit
-        fi
+		then
+			echo "Enter max 5 level"
+			exit
+		fi
 		read -p "Enter the risk (max 3): " risk
 		if [[ $risk -gt 3 ]]
-        then
-            echo "Enter max 3 risk"
-            exit
+		then
+			echo "Enter max 3 risk"
+			exit
 		fi
-		read -p "Enter the cookie value: " cookie
-		read -p "Enter the Backend (MySQL, MSSQL, Oracle etc): " dbms
+		read -p "Enter the cookie value (Leave blank if no cookie): " cookie
+		if [[ -z "$cookie" ]]
+		then
+			ckie=""
+		else
+			ckie="--cookie=\"$cookie\""
+		fi
+		read -p "Enter the Backend (MySQL, MSSQL, Oracle etc, Leave blank if not known): " dbms
+		if [[ -z "$dbms" ]]
+		then
+			dbmsn=""
+		else
+			dbmsn="--dbms=\"$dbms\""
+		fi
+		#SQLmap runs, which all the specified flags, and then cmprs function is run for report creation.
 		echo "*************************************************************************************"
 		echo "					Scan Started"
 		echo "*************************************************************************************"
-		sqlmap -u "$url" --threads=$thrd --level=$level --risk=$risk --cookie="$cookie" -f --banner --dbs --dbms="$dbms" -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
-
+		sqlmap -u "$url" --threads=$thrd --level=$level --risk=$risk $ckie -f --banner --dbs $dbmsn -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
 		cmprs
 ;;
 	"f" | "F")
@@ -91,32 +120,43 @@ case $option in
 		echo "					File Selected"
 		echo "*************************************************************************************"
 		read -p "Enter the filename in home directory: " filename
+		#Checking if file exists or not.
 		if [[ ! -f "$HOME/$filename" ]]
 		then
 			echo "File does not exist, make sure you have entered correct filename and it is in $HOME directory."
 			exit
 		else
+			#Flags passed to sqlmap, can add additional flags accordingly.
 			read -p "Enter the number of threads (max 10): " thrd
-            if [[ $thrd -gt 10 ]]
-            then
-                echo "Enter max 10 threads"
-                exit
-            fi
-            read -p "Enter the level (max 5): " level
-            if [[ $level -gt 5 ]]
-            then
-                echo "Enter max 5 level"
-                exit
-            fi
-            read -p "Enter the risk (max 3): " risk
-            if [[ $risk -gt 3 ]]
-            then
-                echo "Enter max 3 risk"
-                exit
-            fi
-            read -p "Enter the Backend (MySQL, MSSQL, Oracle etc): " dbms
-			echo "Scan started"
-			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs --dbms="$dbms" -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
+			if [[ $thrd -gt 10 ]]
+			then
+				echo "Enter max 10 threads"
+				exit
+			fi
+			read -p "Enter the level (max 5): " level
+			if [[ $level -gt 5 ]]
+			then
+				echo "Enter max 5 level"
+				exit
+			fi
+			read -p "Enter the risk (max 3): " risk
+			if [[ $risk -gt 3 ]]
+			then
+				echo "Enter max 3 risk"
+				exit
+			fi
+			read -p "Enter the Backend (MySQL, MSSQL, Oracle etc): " dbms
+			if [[ -z "$dbms" ]]
+			then
+				dbmsn=""
+			else
+				dbmsn="--dbms=\"$dbms\""
+			fi
+			#SQLmap runs, which all the specified flags, and then cmprs function is run for report creation.
+			echo "*************************************************************************************"
+			echo "				Scan started"
+			echo "*************************************************************************************"
+			sqlmap -r "$HOME/$filename" --threads=$thrd --level=$level --risk=$risk -f --banner --dbs $dbmsn -s "$HOME/$project/report_sqlmap_$project.sqlite" --flush-session -t "$HOME/$project/extensive_sqlmap_$project.txt" --fresh-queries 2>&1 | tee "$HOME/$project/overview_sqlmap_$project.txt"
 			cmprs
 		fi
 ;;
