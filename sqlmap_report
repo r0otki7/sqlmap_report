@@ -108,7 +108,7 @@ case $option in
 		else
 			dbmsn="--dbms=\"$dbms\""
 		fi
-		#SQLmap runs, which all the specified flags, and then cmprs function is run for report creation.
+		#SQLmap runs, with all the specified flags, and then cmprs function is run for report creation.
 		echo "*************************************************************************************"
 		echo "					Scan Started"
 		echo "*************************************************************************************"
@@ -145,14 +145,14 @@ case $option in
 				echo "Enter max 3 risk"
 				exit
 			fi
-			read -p "Enter the Backend (MySQL, MSSQL, Oracle etc): " dbms
+			read -p "Enter the Backend (MySQL, MSSQL, Oracle etc, Leave blank if not known): " dbms
 			if [[ -z "$dbms" ]]
 			then
 				dbmsn=""
 			else
 				dbmsn="--dbms=\"$dbms\""
 			fi
-			#SQLmap runs, which all the specified flags, and then cmprs function is run for report creation.
+			#SQLmap runs, with all the specified flags, and then cmprs function is run for report creation.
 			echo "*************************************************************************************"
 			echo "				Scan started"
 			echo "*************************************************************************************"
