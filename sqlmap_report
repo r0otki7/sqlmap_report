@@ -109,7 +109,7 @@ case $option in
 		else
 			dbmsn="--dbms=\"$dbms\""
 		fi
-		#SQLmap runs, which all the specified flags, and then cmprs function is run for report creation.
+		#SQLmap runs, with all the specified flags, and then cmprs function is run for report creation.
 		echo "*************************************************************************************"
 		echo "					Scan Started"
 		echo "*************************************************************************************"
@@ -147,7 +147,7 @@ case $option in
 			else
 				dbmsn="--dbms=\"$dbms\""
 			fi
-			#SQLmap runs, which all the specified flags, and then cmprs function is run for report creation.
+			#SQLmap runs, with all the specified flags, and then cmprs function is run for report creation.
 			echo "*************************************************************************************"
 			echo "				Scan started"
 			echo "*************************************************************************************"
